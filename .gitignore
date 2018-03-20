@@ -1,1 +1,6 @@
 OBS\.*
+*.la
+*.lo
+*.o
+*.slo
+.libs
