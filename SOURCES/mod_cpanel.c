@@ -14,7 +14,7 @@
 #include "apr_want.h"
 
 #define MODULE_NAME "mod_cpanel"
-#define MODULE_VERSION "1.0"
+#define MODULE_VERSION "1.1"
 
 /* The debug setting will log the full cache behavior */
 #ifdef CPANEL_DEBUG
@@ -165,7 +165,7 @@ static apr_status_t cpanel_open_htaccess(request_rec *r, const char *dir_name, c
     DEBUG_printf("Cache-miss: htaccess request for '%s'", *full_name);
 
     cached_entry = apr_palloc(r->server->process->pool, (sizeof(htaccess_cache_entry) + name_len + 1));
-    cached_entry->status = ap_pcfg_openfile(conffile, r->server->process->pool, *full_name);
+    cached_entry->status = ap_pcfg_openfile(conffile, r->pool, *full_name);
     cached_entry->conffile = conffile;
 
     /*

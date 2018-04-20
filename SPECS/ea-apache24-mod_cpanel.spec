@@ -5,7 +5,7 @@
 %define release_prefix 1
 
 Name:           %{ns_name}-%{module_name}
-Version:        1.0
+Version:        1.1
 Release:        %{release_prefix}%{?dist}.cpanel
 Summary:        Perform cPanel specific checks when handling requests
 
@@ -69,6 +69,9 @@ rm -rf %{buildroot}
 %config(noreplace) %attr(0644,root,root) %{_sysconfdir}/apache2/conf.modules.d/%{module_name}-debug.conf
 
 %changelog
+* Wed Apr 18 2018 Rishwanth Yeddula <rish@cpanel.net> - 1.1-1
+- EA-7387: Avoid segfaults when used with threaded MPMs.
+
 * Tue Mar 20 2018 Rishwanth Yeddula <rish@cpanel.net> - 1.0-1
 - EA-7191: Initial implementation of mod_cpanel:
     * Handle requests to suspended users in apache without requiring
