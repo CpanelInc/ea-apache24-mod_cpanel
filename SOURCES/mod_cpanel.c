@@ -71,7 +71,7 @@ static void *populate_suspended_users(cpanel_server_config *sconf, apr_pool_t *p
             if ((pw = getpwnam(de->d_name)) == NULL) {
                 continue;
             }
-            *(const char**)apr_array_push(sconf->suspended_users) = apr_pstrdup(pool, pw->pw_dir);
+            *(const char**)apr_array_push(sconf->suspended_users) = apr_pstrcat(pool, pw->pw_dir, "/", NULL);
         }
     }
     closedir(dr);
