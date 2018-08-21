@@ -14,7 +14,7 @@
 #include "apr_want.h"
 
 #define MODULE_NAME "mod_cpanel"
-#define MODULE_VERSION "1.1"
+#define MODULE_VERSION "1.3"
 
 /* The debug setting will log the full cache behavior */
 #ifdef CPANEL_DEBUG
@@ -38,7 +38,11 @@ typedef struct
     int populated_suspended_users;
     apr_hash_t *htaccess_cache_table;
     apr_array_header_t *suspended_users;
+#if APR_HAS_THREADS
+    apr_thread_mutex_t *cache_lock;
+#endif
 } cpanel_server_config;
+
 
 /*
  * Populates the suspended_users array in the server_config struct
@@ -85,6 +89,9 @@ static void *create_server_config(apr_pool_t *p, server_rec *s)
 {
     cpanel_server_config *sconf = apr_palloc(s->process->pool, sizeof(cpanel_server_config));
     sconf->htaccess_cache_table = apr_hash_make(s->process->pool);
+#if APR_HAS_THREADS
+    apr_thread_mutex_create(&sconf->cache_lock, APR_THREAD_MUTEX_DEFAULT, s->process->pool);
+#endif
 
     /* Populate the suspended users list */
     populate_suspended_users(sconf, s->process->pool);
@@ -147,37 +154,57 @@ static apr_status_t cpanel_open_htaccess(request_rec *r, const char *dir_name, c
     cpanel_server_config *sconf;
     sconf = ap_get_module_config(r->server->module_config, &cpanel_module);
 
-    *full_name = ap_make_full_path(r->server->process->pool, dir_name, access_name);
+    *full_name = ap_make_full_path(r->pool, dir_name, access_name);
     apr_size_t name_len = strlen(*full_name);
 
-    htaccess_cache_entry *cached_entry = apr_hash_get(sconf->htaccess_cache_table, (void *)*full_name, name_len);
-    if ( cached_entry != NULL ) {
-        DEBUG_printf("Cache-hit: htaccess request for '%s'", *full_name);
+#if APR_HAS_THREADS
+    if (APR_SUCCESS == apr_thread_mutex_trylock(sconf->cache_lock)) {
+#endif
+        htaccess_cache_entry *cached_entry = apr_hash_get(sconf->htaccess_cache_table, (void *)*full_name, name_len);
+        if ( cached_entry != NULL ) {
+            DEBUG_printf("Cache-hit: htaccess request for '%s'", *full_name);
+            /*
+             * TODO: cache finfo, or stat files periodically to avoid requiring
+             * a restart to get *new* .htaccess files automatically to take effect.
+             * cached_entry->status = apr_stat(&cached_entry->finfo, *full_name, APR_FINFO_IDENT | APR_FINFO_MIN | APR_FINFO_PROT, cache_pool);
+             */
+            conffile = (ap_configfile_t **)&cached_entry->conffile;
+#if APR_HAS_THREADS
+            apr_thread_mutex_unlock(sconf->cache_lock);
+#endif
+            return cached_entry->status;
+        }
+
+        DEBUG_printf("Cache-miss: htaccess request for '%s'", *full_name);
+
+        cached_entry = apr_palloc(r->server->process->pool, (sizeof(htaccess_cache_entry) + name_len + 1));
+        cached_entry->status = ap_pcfg_openfile(conffile, r->pool, *full_name);
+        cached_entry->conffile = conffile;
+
         /*
-         * TODO: cache finfo, or stat files periodically to avoid requiring
-         * a restart to get *new* .htaccess files automatically to take effect.
-         * cached_entry->status = apr_stat(&cached_entry->finfo, *full_name, APR_FINFO_IDENT | APR_FINFO_MIN | APR_FINFO_PROT, cache_pool);
+         * Cache the 'negative' htaccess hit. Basically, if the file did not exist, or we couldn't
+         * read it, then cache the state so we dont have to try that file again.
          */
-        conffile = (ap_configfile_t **)&cached_entry->conffile;
+        if ( APR_STATUS_IS_ENOENT(cached_entry->status) || APR_STATUS_IS_ENOTDIR(cached_entry->status) ) {
+            DEBUG_printf("Caching htaccess request for '%s'", *full_name);
+            apr_hash_set(sconf->htaccess_cache_table, (void *)*full_name, name_len, (void *)cached_entry);
+        }
+#if APR_HAS_THREADS
+        apr_thread_mutex_unlock(sconf->cache_lock);
+#endif
         return cached_entry->status;
+#if APR_HAS_THREADS
     }
-
-    DEBUG_printf("Cache-miss: htaccess request for '%s'", *full_name);
-
-    cached_entry = apr_palloc(r->server->process->pool, (sizeof(htaccess_cache_entry) + name_len + 1));
-    cached_entry->status = ap_pcfg_openfile(conffile, r->pool, *full_name);
-    cached_entry->conffile = conffile;
+#endif
 
     /*
-     * Cache the 'negative' htaccess hit. Basically, if the file did not exist, or we couldn't
-     * read it, then cache the state so we dont have to try that file again.
+     * If we couldn't get a mutex lock
+     * then we need to do what apache expects
+     * and just do a normal ap_pcfg_openfile()
+     * and return the status.
      */
-    if ( APR_STATUS_IS_ENOENT(cached_entry->status) || APR_STATUS_IS_ENOTDIR(cached_entry->status) ) {
-        DEBUG_printf("Caching htaccess request for '%s'", *full_name);
-        apr_hash_set(sconf->htaccess_cache_table, (void *)*full_name, name_len, (void *)cached_entry);
-    }
-
-    return cached_entry->status;
+    int status = ap_pcfg_openfile(conffile, r->pool, *full_name);
+    return status;
 }
 
 /* register_hooks: Adds a hook to the httpd process */

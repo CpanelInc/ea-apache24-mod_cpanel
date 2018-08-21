@@ -5,7 +5,7 @@
 %define release_prefix 1
 
 Name:           %{ns_name}-%{module_name}
-Version:        1.2
+Version:        1.3
 Release:        %{release_prefix}%{?dist}.cpanel
 Summary:        Perform cPanel specific checks when handling requests
 
@@ -69,6 +69,9 @@ rm -rf %{buildroot}
 %config(noreplace) %attr(0644,root,root) %{_sysconfdir}/apache2/conf.modules.d/%{module_name}-debug.conf
 
 %changelog
+* Tue Aug 14 2018 Rishwanth Yeddula <rish@cpanel.net> - 1.3-1
+- ZC-3819: Avoid thread deadlocks on certain threaded MPM systems.
+
 * Fri Jun 29 2018 Rishwanth Yeddula <rish@cpanel.net> - 1.2-1
 - EA-7639: Ensure the suspended users check is more accurate.
 
