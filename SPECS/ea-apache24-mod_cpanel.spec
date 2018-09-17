@@ -45,7 +45,6 @@ mv .libs/%{module_name}.so .
 mv .libs/%{module_name}-debug.so .
 
 %{__strip} -g %{module_name}.so
-%{__strip} -g %{module_name}-debug.so
 
 %install
 mkdir -p %{buildroot}%{_httpd_moddir}
