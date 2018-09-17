@@ -5,7 +5,7 @@
 %define release_prefix 1
 
 Name:           %{ns_name}-%{module_name}
-Version:        1.3
+Version:        1.4
 Release:        %{release_prefix}%{?dist}.cpanel
 Summary:        Perform cPanel specific checks when handling requests
 
@@ -68,6 +68,13 @@ rm -rf %{buildroot}
 %config(noreplace) %attr(0644,root,root) %{_sysconfdir}/apache2/conf.modules.d/%{module_name}-debug.conf
 
 %changelog
+* Mon Sep 17 2018 Rishwanth Yeddula <rish@cpanel.net> - 1.4-1
+- EA-7821: Don't strip symbools from the debug package.
+- EA-7822: Handle edge cases where request_rec->filename == NULL.
+    * Some modules that hook into the map_to_storage process (eg. mod_pagespeed),
+      can alter the request_rec in an unexpected manner, that resulted
+      result in a segfault.
+
 * Tue Aug 14 2018 Rishwanth Yeddula <rish@cpanel.net> - 1.3-1
 - ZC-3819: Avoid thread deadlocks on certain threaded MPM systems.
 
