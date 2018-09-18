@@ -14,7 +14,7 @@
 #include "apr_want.h"
 
 #define MODULE_NAME "mod_cpanel"
-#define MODULE_VERSION "1.3"
+#define MODULE_VERSION "1.4"
 
 /* The debug setting will log the full cache behavior */
 #ifdef CPANEL_DEBUG
@@ -111,7 +111,13 @@ static int suspended_user_handler(request_rec *r)
     cpanel_server_config *sconf;
     sconf = ap_get_module_config(r->server->module_config, &cpanel_module);
 
-    if (!sconf->populated_suspended_users) {
+    /*
+     * If we failed to populate the suspended users list in
+     * populate_suspended_users() or if the request_rec is altered
+     * in an unexpected manner, then don't attempt to handle
+     * the suspended user check.
+     */
+    if (!sconf->populated_suspended_users || r->filename == NULL) {
         return (DECLINED);
     }
 
