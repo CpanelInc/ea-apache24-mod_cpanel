@@ -5,7 +5,7 @@
 %define release_prefix 1
 
 Name:           %{ns_name}-%{module_name}
-Version:        1.4
+Version:        1.5
 Release:        %{release_prefix}%{?dist}.cpanel
 Summary:        Perform cPanel specific checks when handling requests
 
@@ -68,6 +68,9 @@ rm -rf %{buildroot}
 %config(noreplace) %attr(0644,root,root) %{_sysconfdir}/apache2/conf.modules.d/%{module_name}-debug.conf
 
 %changelog
+* Tue Sep 18 2018 Tim Mullin <tim@cpanel.net> - 1.5-1
+- EA-7386: Eliminate warning when suspended account directory does not exist.
+
 * Mon Sep 17 2018 Rishwanth Yeddula <rish@cpanel.net> - 1.4-1
 - EA-7821: Don't strip symbools from the debug package.
 - EA-7822: Handle edge cases where request_rec->filename == NULL.

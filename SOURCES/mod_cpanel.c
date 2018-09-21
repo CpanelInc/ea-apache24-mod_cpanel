@@ -63,7 +63,10 @@ static void *populate_suspended_users(cpanel_server_config *sconf, apr_pool_t *p
 
     if (dr == NULL)  // opendir returns NULL if couldn't open directory
     {
-        ap_log_perror(APLOG_MARK, APLOG_WARNING, 0, pool, "Failed to populate suspended users. Could not open directory: %s", "/var/cpanel/suspended");
+        // Don't log a warning if the directory simply doesn't exist
+        if (errno != ENOENT) {
+            ap_log_perror(APLOG_MARK, APLOG_WARNING, 0, pool, "Failed to populate suspended users. Could not open directory: %s", "/var/cpanel/suspended");
+        }
         sconf->populated_suspended_users = 0;
         return NULL;
     }
