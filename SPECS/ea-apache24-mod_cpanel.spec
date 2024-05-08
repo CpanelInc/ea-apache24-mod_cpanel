@@ -2,16 +2,16 @@
 %global module_name mod_cpanel
 
 # Doing release_prefix this way for Release allows for OBS-proof versioning, See EA-4556 for more details
-%define release_prefix 1
+%define release_prefix 2
 
 Name:           %{ns_name}-%{module_name}
 Version:        1.5
 Release:        %{release_prefix}%{?dist}.cpanel
-Summary:        Perform cPanel specific checks when handling requests
+Summary:        EOL Perform cPanel specific checks when handling requests
 
 Vendor:         cPanel, Inc
 License:        cPanel
-URL:            https://cpanel.net/
+URL: https://docs.cpanel.net/ea4/apache/apache-module-cpanel/
 Source0:        %{module_name}.c
 Source1:        %{module_name}.conf
 Source2:        %{module_name}-debug.conf
@@ -21,15 +21,19 @@ Requires:       ea-apache24-mmn = %{_httpd_mmn}
 Requires(pre):  ea-apache24
 
 %description
+apache24-mod_cpanel has reached End of Life.
+
 This module performs cPanel-specific checks when handling requests, such as
 ensuring that requests for suspended users/websites get redirected to the
 suspendedpage, etc.
 
 %package -n     %{ns_name}-%{module_name}-debug
-Summary:        Perform cPanel specific checks when handling requests (debug)
+Summary:        EOL Perform cPanel specific checks when handling requests (debug)
 Conflicts:      %{ns_name}-%{module_name}
 
 %description -n %{ns_name}-%{module_name}-debug
+apache24-mod_cpanel has reached End of Life.
+
 This package contains the debug version of %{module_name}
 
 %prep
@@ -68,6 +72,9 @@ rm -rf %{buildroot}
 %config(noreplace) %attr(0644,root,root) %{_sysconfdir}/apache2/conf.modules.d/%{module_name}-debug.conf
 
 %changelog
+* Tue Mar 26 2024 Dan Muey <dan@cpanel.net> - 1.5-2
+- ZC-11717: Mark ea-apache24-mod_cpanel as EOL
+
 * Tue Sep 18 2018 Tim Mullin <tim@cpanel.net> - 1.5-1
 - EA-7386: Eliminate warning when suspended account directory does not exist.
 
