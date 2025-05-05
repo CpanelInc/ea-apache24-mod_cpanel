@@ -2,7 +2,7 @@
 %global module_name mod_cpanel
 
 # Doing release_prefix this way for Release allows for OBS-proof versioning, See EA-4556 for more details
-%define release_prefix 2
+%define release_prefix 3
 
 Name:           %{ns_name}-%{module_name}
 Version:        1.5
@@ -72,6 +72,9 @@ rm -rf %{buildroot}
 %config(noreplace) %attr(0644,root,root) %{_sysconfdir}/apache2/conf.modules.d/%{module_name}-debug.conf
 
 %changelog
+* Mon May 05 2025 Dan Muey <daniel.muey@webpros.com> - 1.5-3
+- ZC-12813: Add Almalinux_10 to DISABLE_BUILD in Makefile
+
 * Tue Mar 26 2024 Dan Muey <dan@cpanel.net> - 1.5-2
 - ZC-11717: Mark ea-apache24-mod_cpanel as EOL
 
